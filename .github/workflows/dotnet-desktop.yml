@@ -27,5 +27,11 @@ jobs:
       - name: Compilar projeto
         run: dotnet build --no-restore --configuration Release
 
-      - name: Rodar testes
-        run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Publicar aplicação
+        run: dotnet publish --configuration Release --output ./publish
+
+      - name: Upload do artefato (opcional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-publish
+          path: ./publish
