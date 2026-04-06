@@ -7,9 +7,8 @@ on:
       - main
 
 jobs:
-
- build-test:
-    name: Build and Test
+  build-test:
+    name: Build, Test, Coverage and Publish
     runs-on: ubuntu-latest
 
     steps:
@@ -27,10 +26,46 @@ jobs:
       - name: Compilar projeto
         run: dotnet build --no-restore --configuration Release
 
-      - name: Publicar aplicação
-        run: dotnet publish --configuration Release --output ./publish
+      - name: Rodar testes com cobertura
+        run: |
+          dotnet test --no-build --configuration Release \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=cobertura \
+            /p:CoverletOutput=./TestResults/coverage.xml
 
-      - name: Upload do artefato (opcional)
+      - name: Instalar ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Adicionar ferramentas .NET ao PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Gerar relatório de cobertura
+        run: |
+          reportgenerator \
+            -reports:**/coverage.xml \
+            -targetdir:coveragereport \
+            -reporttypes:TextSummary
+
+      - name: Exibir resumo da cobertura
+        run: cat coveragereport/Summary.txt
+
+      - name: Validar cobertura mínima (80%)
+        run: |
+          COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+(\.[0-9]+)?' coveragereport/Summary.txt | head -n 1)
+
+          if [ -z "$COVERAGE" ]; then
+            echo "Não foi possível identificar a cobertura no Summary.txt"
+            exit 1
+          fi
+
+          echo "Cobertura encontrada: $COVERAGE%"
+
+          awk "BEGIN {exit !($COVERAGE >= 80)}"
+
+      - name: Publicar aplicação
+        run: dotnet publish --no-build --configuration Release --output ./publish
+
+      - name: Upload do artefato
         uses: actions/upload-artifact@v4
         with:
           name: app-publish
