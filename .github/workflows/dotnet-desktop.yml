@@ -3,7 +3,7 @@ name: .NET Core Desktop
 on:
   pull_request:
     branches:
-      - qa-test
+      - qa-test(dev)
       - main
 
 jobs:
