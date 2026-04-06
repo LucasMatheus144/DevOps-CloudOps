@@ -1,0 +1,31 @@
+name: .NET Core Desktop
+
+on:
+  pull_request:
+    branches:
+      - qa-test
+      - main
+
+jobs:
+
+ build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Compilar projeto
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Rodar testes
+        run: dotnet test --no-build --configuration Release --verbosity normal
