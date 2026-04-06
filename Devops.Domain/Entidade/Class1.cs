@@ -1,4 +1,4 @@
-﻿namespace Devops.Domain
+﻿namespace Devops.Domain.Entidade
 {
     public class Class1
     {
