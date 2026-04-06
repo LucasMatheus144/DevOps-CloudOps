@@ -15,6 +15,23 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      - name: Criar ou atualizar PR para main
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto/qa-test-dev-to-main
+          base: main
+          title: "chore: promote qa-test(dev) to main"
+          body: |
+            PR automática criada a partir da branch qa-test(dev).
+            
+            Requisitos para merge:
+            - aprovação obrigatória
+            - pipeline verde
+            - cobertura mínima atendida
+          commit-message: "chore: sync qa-test(dev) to main"
+          delete-branch: true
+
       - name: Instalar .NET 6
         uses: actions/setup-dotnet@v4
         with:
