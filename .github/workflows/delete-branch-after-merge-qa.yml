@@ -1,0 +1,42 @@
+name: Delete branch aproved QA
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  delete-source-branch:
+    name: Delete source branch
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'qa-test(dev)'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Definir nome da branch de origem
+        run: |
+          echo "SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+
+      - name: Exibir branch
+        run: |
+          echo "Branch de origem: $SOURCE_BRANCH"
+
+      - name: Impedir exclusão de branches protegidas
+        run: |
+          if [[ "$SOURCE_BRANCH" == "main" || "$SOURCE_BRANCH" == "qa-test(dev)" ]]; then
+            echo "Branch protegida. Não será deletada."
+            exit 0
+          fi
+
+      - name: Deletar branch de origem
+        run: |
+          curl -L \
+            -X DELETE \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$SOURCE_BRANCH
