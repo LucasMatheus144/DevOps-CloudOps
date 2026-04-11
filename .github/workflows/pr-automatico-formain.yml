@@ -1,0 +1,59 @@
+name: pr-automatico-formain
+
+on:
+  push:
+    branches:
+      - "qa-test(dev)"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  open-pr:
+    name: Criar ou localizar PR de QA para Main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Verificar se já existe PR aberto
+        id: existing_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --base main \
+            --head "qa-test(dev)" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Criar PR automático para main
+        if: steps.existing_pr.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "qa-test(dev)" \
+            --title "chore: promote qa-test(dev) to main" \
+            --body "PR automática criada a partir da branch qa-test(dev).
+
+          Requisitos para merge:
+          - aprovação obrigatória
+          - pipeline verde
+          - cobertura mínima de 80%
+          - sem vulnerabilidades bloqueantes"
+
+      - name: Exibir PR existente
+        if: steps.existing_pr.outputs.exists == 'true'
+        run: echo "Já existe PR aberto #${{ steps.existing_pr.outputs.number }}"
