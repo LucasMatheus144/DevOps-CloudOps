@@ -3,42 +3,34 @@ name: .NET Core Desktop
 on:
   pull_request:
     branches:
-      - qa-test(dev)
-      - main
+      - "qa-test(dev)"
+      - "main"
+
+permissions:
+  contents: read
 
 jobs:
-  build-test:
-    name: Build, Test, Coverage and Publish
+  validate:
+    name: Build, Test, Lint, Coverage
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Criar ou atualizar PR para main
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: auto/qa-test-dev-to-main
-          base: main
-          title: "chore: promote qa-test(dev) to main"
-          body: |
-            PR automática criada a partir da branch qa-test(dev).
-            
-            Requisitos para merge:
-            - aprovação obrigatória
-            - pipeline verde
-            - cobertura mínima atendida
-          commit-message: "chore: sync qa-test(dev) to main"
-          delete-branch: true
-
       - name: Instalar .NET 6
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: "8.0.x"
 
       - name: Restaurar dependências
         run: dotnet restore
+
+      - name: Verificar formatação
+        run: dotnet format --verify-no-changes --verbosity diagnostic
+
+      - name: Auditoria de pacotes NuGet
+        run: dotnet list package --vulnerable --include-transitive
 
       - name: Compilar projeto
         run: dotnet build --no-restore --configuration Release
@@ -66,7 +58,8 @@ jobs:
       - name: Exibir resumo da cobertura
         run: cat coveragereport/Summary.txt
 
-      - name: Validar cobertura mínima (80%)
+      - name: Validar cobertura mínima de 80%
+        shell: bash
         run: |
           COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+(\.[0-9]+)?' coveragereport/Summary.txt | head -n 1)
 
@@ -77,7 +70,7 @@ jobs:
 
           echo "Cobertura encontrada: $COVERAGE%"
 
-          awk "BEGIN {exit !($COVERAGE >= 80)}"
+          awk "BEGIN { exit !($COVERAGE >= 80) }"
 
       - name: Publicar aplicação
         run: dotnet publish --no-build --configuration Release --output ./publish
