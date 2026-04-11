@@ -4,6 +4,7 @@ namespace Devops.Domain.Entidade
 {
     public class Class1
     {
+        [Required]
         public string Nome { get; set; }
 
         [Required]
