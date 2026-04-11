@@ -19,10 +19,12 @@ jobs:
 
     steps:
       - name: Definir nome da branch de origem
-        run: echo "SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+        run: |
+          echo "SOURCE_BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
 
       - name: Exibir branch
-        run: echo "Branch de origem: $SOURCE_BRANCH"
+        run: |
+          echo "Branch de origem: $SOURCE_BRANCH"
 
       - name: Impedir exclusão de branches protegidas
         run: |
