@@ -5,6 +5,10 @@ on:
     types:
       - closed
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   delete-source-branch:
     name: Delete source branch
@@ -12,10 +16,6 @@ jobs:
       github.event.pull_request.merged == true &&
       github.event.pull_request.base.ref == 'qa-test(dev)'
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pull-requests: read
 
     steps:
       - name: Definir nome da branch de origem
